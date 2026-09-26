@@ -4,7 +4,32 @@
 
 ## 使用
 
-本机已连接 Codex 的 `@oai/artifact-tool` 依赖。需要 Python 3.9+ 和 Node.js 22+，Python 不需要安装第三方包。
+需要 Python 3.9+（推荐 Python 3.12 或更新版本）和 openpyxl。不需要 Node.js、Codex 或安装 Microsoft Excel。
+
+### Windows
+
+1. 从 https://www.python.org/downloads/windows/ 安装 Python，启用 Python launcher，并勾选 Add Python to PATH。
+2. 在 GitHub 仓库点击 Code → Download ZIP，解压到本地文件夹。不要直接在 ZIP 内运行。
+3. 把真实 CSV 放进解压后项目的 `input` 文件夹。
+4. 关闭已打开的同名输出 Excel，双击 `run_windows.bat`。首次运行需要联网安装 openpyxl。
+5. 在 `output` 文件夹查看输出 Excel。窗口会显示成功提示或错误信息，按任意键关闭。
+
+也可以打开项目目录的 PowerShell，执行：
+
+```powershell
+py -3 -m pip install -r requirements.txt
+py -3 convert.py
+```
+
+如果提示找不到 `py`，尝试用 `python` 替代，或重新安装 Python 并启用 launcher。如果提示 Permission denied，请先关闭输出 Excel。公司电脑无法安装依赖时，请联系 IT 配置 Python 和 openpyxl。
+
+### macOS / Linux
+
+首次运行安装依赖：
+
+```bash
+python3 -m pip install -r requirements.txt
+```
 
 1. 把真实 CSV 文件放进 `input/`（只读取该目录，不递归子目录）。
 2. 在项目目录运行：
@@ -40,12 +65,13 @@ python3 convert.py --empty-template
 
 - `convert.py`：CSV 读取、验证、金额计算和命令行入口。
 - `mapping.py`：45 列顺序及映射。
-- `export.mjs`：Excel 导出、表头样式及冻结首行/首列。
+- `requirements.txt`：Python 依赖。
+- `run_windows.bat`：Windows 双击运行入口。
 - `input/`：放入真实 CSV；交付时为空。
 - `output/`：Excel 输出。
 
-`node_modules` 是指向本机 Codex 运行时依赖的链接。迁移到另一台电脑时，需要让 `@oai/artifact-tool` 可被该项目的 Node.js 加载；不要直接复制本机依赖链接。
+Excel 导出已集成到 `convert.py`，使用 openpyxl；项目不再依赖本机 Codex 运行时或 `node_modules`。
 
 ## 验证范围
 
-已生成并检查空白模板的 45 列名称、顺序和无数据行状态，并预览表头。未创建 synthetic input dataset。尚未用真实 CSV 验证多文件转换；提供真实数据后可运行转换并核对输入/输出行数。
+已检查空白模板的 45 列名称、顺序和无数据行状态，并预览表头。未创建 synthetic input dataset。尚未用真实 CSV 验证多文件转换，也未在 Windows 实机运行；提供真实数据后可运行转换并核对输入/输出行数。
