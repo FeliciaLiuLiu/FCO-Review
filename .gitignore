@@ -1,0 +1,8 @@
+node_modules
+__pycache__/
+input/*
+!input/.gitkeep
+output/
+.DS_Store
+.env
+.env.*
