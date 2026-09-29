@@ -4,7 +4,7 @@
 
 ## 使用
 
-需要 Python 3.9+（推荐 Python 3.12 或更新版本）和 openpyxl。不需要 Node.js、Codex 或安装 Microsoft Excel。
+本项目支持 Python 3.11 和 openpyxl。不需要 Node.js、Codex 或安装 Microsoft Excel。
 
 ### Windows
 
@@ -17,11 +17,11 @@
 也可以打开项目目录的 PowerShell，执行：
 
 ```powershell
-py -3 -m pip install -r requirements.txt
-py -3 convert.py
+py -3.11 -m pip install -r requirements.txt
+py -3.11 convert.py
 ```
 
-如果提示找不到 `py`，尝试用 `python` 替代，或重新安装 Python 并启用 launcher。如果提示 Permission denied，请先关闭输出 Excel。公司电脑无法安装依赖时，请联系 IT 配置 Python 和 openpyxl。
+在 Conda 环境中，先运行 `python --version` 确认是 3.11，再运行 `python -m pip install -r requirements.txt` 和 `python convert.py`。无需 `py` launcher。如果提示 Permission denied，请先关闭输出 Excel。公司电脑无法安装依赖时，请联系 IT 配置 Python 和 openpyxl。
 
 ### macOS / Linux
 
@@ -53,12 +53,15 @@ python3 convert.py --empty-template
 ## 映射和数据规则
 
 - `mapping.py` 是唯一的列顺序和映射定义。输出使用最终清单中的 `Creditor Account ID`、`Ultimate Creditor Account ID` 和带右括号的交易 ID 列名。
+- Ultimate Debtor 使用 `ult_orig_*` 五个来源字段；Ultimate Creditor 使用 `ult_bene_*` 五个来源字段。Debtor 和 Creditor 分别使用 `orig_*` 和 `bene_*`。这些来源列必须存在，单元格值可以为空。
 - 按 CSV 文件名排序合并，保留文件内行顺序。每条数据行的客户名为所属文件名去掉最后的 `.csv` 扩展名。
 - 所有输入字段按文本读取，账号和交易 ID 的前导零不会丢失。日期直接保留 `value_date` 原文，避免猜测不同日期格式。
 - `amount` 按十进制数除以 100，Excel 中为数值；空金额保留空白，零金额保留零。接受小数、负数及科学计数法，不接受千分位逗号或货币符号；不进行汇率转换或自行四舍五入。超出 Excel 15 位有效数字的金额会报错。
 - 映射中的 Address Line 2/3 一律为空。空字符串和仅含空白的单元格输出为空；`NULL`、`NA` 等非空文本保持原样。
 - 标准逗号分隔 CSV，支持带引号的逗号、换行和 UTF-8 BOM，默认编码为 UTF-8。列名必须准确匹配，允许额外列。缺失必需列、重复表头、字段数量不一致或非法金额均报错。物理空行由 CSV 解析器跳过；有完整字段但值均为空的记录仍作为一条数据行处理。
 - 输入文本以 `=` 开头时作为文字写入，不作为 Excel 公式执行。
+- 名称检查：将客户名、Debtor Name 和 Creditor Name 忽略大小写、去除所有空白字符后比较。任一名称包含完整客户名即匹配；两者均不包含时，输出整行 A:AS（包括空白单元格）填充黄色。两者均为空也标黄。比如 `Billy Kim` 可以匹配 `BILLYKIM` 或 `Payment for BILLY KIM Ltd`。标点不会被删除，不做拼写近似匹配；原始名称保持不变。
+- 标黄在每次导出时计算。手动修改输出 Excel 后颜色不会自动更新，需要重新运行转换。终端显示标黄行数；空白模板只有表头，无黄色数据行。
 - 单表最多 1,048,575 条数据行。当前实现会在内存中合并数据，超大文件的可处理规模取决于本机内存。
 
 ## 文件

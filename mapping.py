@@ -17,13 +17,13 @@ def party(label, prefix):
         (label + ' Country', prefix + '_cntry_code'),
     ]
 
-MAPPING += party('Ultimate Debtor', 'orig')
+MAPPING += party('Ultimate Debtor', 'ult_orig')
 MAPPING += party('Debtor', 'orig')
 for label, prefix in [('Agent Debtor', 'obk'), ('Agent Creditor', 'bbk')]:
     MAPPING += [(label + ' ID', prefix + '_raw_account_num'),
                 (label + ' Name', prefix + '_clean_name'),
                 (label + ' Country', prefix + '_cntry_code')]
 MAPPING += party('Creditor', 'bene')
-MAPPING += party('Ultimate Creditor', 'bene')
+MAPPING += party('Ultimate Creditor', 'ult_bene')
 MAPPING += party('Initiating Party', 'ip')
 HEADERS = [label for label, _ in MAPPING]

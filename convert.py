@@ -15,6 +15,16 @@ from mapping import MAPPING, HEADERS
 ROOT = Path(__file__).resolve().parent
 DEFAULT_OUTPUT = ROOT / 'output' / 'Transaction Columns for Fintech RFI_0925_v1.xlsx'
 
+def normalize_name(value):
+    """Case-insensitive comparison ignoring all whitespace; keep source text intact."""
+    return ''.join((value or '').split()).casefold()
+
+def names_need_highlight(customer, debtor, creditor):
+    customer = normalize_name(customer)
+    return not customer or not any(
+        customer in normalize_name(name) for name in (debtor, creditor)
+    )
+
 def export_excel(rows, output):
     try:
         from openpyxl import Workbook
@@ -38,7 +48,14 @@ def export_excel(rows, output):
         cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         header_cells.append(cell)
     sheet.append(header_cells)
+    yellow = PatternFill('solid', fgColor='FFFFFF00')
+    customer_index = HEADERS.index('Fintech Customer')
+    debtor_index = HEADERS.index('Debtor Name')
+    creditor_index = HEADERS.index('Creditor Name')
+    highlighted = 0
     for row in rows:
+        highlight = names_need_highlight(row[customer_index], row[debtor_index], row[creditor_index])
+        highlighted += int(highlight)
         cells = []
         for index, value in enumerate(row):
             cell = WriteOnlyCell(sheet, value=value)
@@ -48,6 +65,8 @@ def export_excel(rows, output):
             elif index == 3:
                 cell.number_format = '0.00#############'
             cell.font = Font(name='Arial', size=10)
+            if highlight:
+                cell.fill = yellow
             cells.append(cell)
         sheet.append(cells)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -58,6 +77,7 @@ def export_excel(rows, output):
         os.replace(temporary, output)
     finally:
         Path(temporary).unlink(missing_ok=True)
+    return highlighted
 
 def amount_value(raw, location):
     if not raw.strip():
@@ -126,10 +146,11 @@ def main():
     args = parser.parse_args()
     try:
         rows, counts = ([], []) if args.empty_template else read_rows(args.input, args.encoding)
-        export_excel(rows, args.output.resolve())
+        highlighted = export_excel(rows, args.output.resolve())
         for name, count in counts:
             print(f'{name}: {count} 行')
         print(f'完成：{len(rows)} 条数据，{len(HEADERS)} 列。输出：{args.output.resolve()}')
+        print(f'名称未匹配、整行标黄：{highlighted} 行')
     except (ValueError, OSError, UnicodeError, csv.Error) as error:
         print(f'转换失败：{error}', file=sys.stderr)
         return 1
