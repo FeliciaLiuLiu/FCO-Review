@@ -16,11 +16,11 @@ python map_address_details.py
 
 也可以双击 `run_address_mapping_windows.bat`（需要 `python` 在 PATH 中）。若 `py -3` 提示未安装 Python，但 `python --version` 正常，则安装依赖时使用 `python -m pip install -r requirements.txt`。这一步直接处理 0929 文件，无需重新运行前两步。
 
-程序用 CSV 的 `raw_addr_id` 分别匹配 Excel 的 `Debtor Address Line 1`、`Creditor Address Line 1`、`Initiating Party Address Line 1`，将匹配单元格替换为同一记录的 `raw_addr_details` 完整文本，不拆分到 Line 2/3。其余 12 个地址列、其他列、行顺序、工作表和单元格格式保留。
+程序用 CSV 的 `raw_addr_id` 分别匹配 Excel 的 `Debtor Address Line 1`、`Creditor Address Line 1`、`Initiating Party Address Line 1`，将匹配单元格替换为同一记录的 `clean_addr_with_nmbrs` 完整文本，不拆分到 Line 2/3。其余 12 个地址列、其他列、行顺序、工作表和单元格格式保留。
 
-表头位于第一行；表头和匹配 ID 忽略首尾空格，ID 区分大小写并保留前导零。Excel ID 必须为文本，数字或公式会报错。未匹配 ID 保留原值，空单元格保留；CSV 空 ID 跳过，匹配到空 details 时清空目标单元格。重复 ID 对应完全相同的 details 可复用，对应不同 details 则报错，原 Excel 不变。
+表头位于第一行；表头和匹配 ID 忽略首尾空格，ID 区分大小写并保留前导零。Excel ID 必须为文本，数字或公式会报错。未匹配 ID 保留原值，空单元格保留；CSV 空 ID 跳过，匹配到空 `clean_addr_with_nmbrs` 时清空目标单元格。重复 ID 对应完全相同的清洗地址可复用，对应不同清洗地址则报错，原 Excel 不变。
 
-成功时先在 `input3/` 创建带 `.backup_时间戳.xlsx` 的原文件备份，再更新原名 Excel。终端分别显示三列的匹配、未匹配及空值数量。重复运行会再次以当前单元格值作为 ID；如需从原始 ID 重新处理，请从备份恢复后再运行。真实文件及备份被 Git 忽略。
+成功时生成 `output/Transaction Columns for Fintech RFI_0929.xlsx`，保留 `input3/` 中的原始 Excel。终端分别显示三列的匹配、未匹配及空值数量。重复运行会重新读取原始 ID 并替换输出文件。输入验证失败时保留已有输出。真实文件被 Git 忽略。
 
 默认 CSV 编码为 UTF-8（兼容 BOM）。其他编码或多个符合条件的工作表可显式指定：
 
@@ -28,7 +28,7 @@ python map_address_details.py
 python map_address_details.py --encoding gb18030 --sheet "Transactions"
 ```
 
-可使用 `--input3 "D:\your-folder\input3"` 指定存放这两个文件的其他目录。
+可使用 `--input3 "D:\your-folder\input3"` 指定存放这两个文件的其他目录，使用 `--output "D:\your-folder\output\result.xlsx"` 指定输出文件路径；输出路径不能与输入 Excel 相同。
 
 将 `input/` 中所有 CSV 的数据行合并到 `output/Transaction Columns for Fintech RFI_0925_v1.xlsx`，固定输出 45 列。当前交付的 Excel 只有表头，没有示例或业务数据。
 

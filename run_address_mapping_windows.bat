@@ -10,6 +10,6 @@ python map_address_details.py
 if errorlevel 1 (
     echo Mapping failed. See the error above.
 ) else (
-    echo Done. Workbook and backup are in input3.
+    echo Done. Mapped workbook is in output.
 )
 pause

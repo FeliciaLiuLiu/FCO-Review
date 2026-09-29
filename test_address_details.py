@@ -13,7 +13,7 @@ class AddressDetailsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'test.xlsx'
             csv_path = Path(folder) / 'mapping.csv'
-            csv_path.write_text('raw_addr_id,raw_addr_details\n001,"Street, City"\n002,=literal\n003,\n', encoding='utf-8-sig')
+            csv_path.write_text('raw_addr_id,raw_addr_details,clean_addr_with_nmbrs\n001,raw address,"Street, City"\n002,raw address,=literal\n003,raw address,\n', encoding='utf-8-sig')
             book = Workbook()
             sheet = book.active
             sheet.append([' ' + TARGETS[0], *TARGETS[1:], 'Debtor Address Line 2', 'Other'])
@@ -24,9 +24,11 @@ class AddressDetailsTests(unittest.TestCase):
             book.save(path)
             book.close()
             original = path.read_bytes()
-            stats, backup = update_workbook(path, read_mapping(csv_path))
-            self.assertEqual(backup.read_bytes(), original)
-            result = load_workbook(path)
+            output = Path(folder) / 'output' / path.name
+            stats, saved_path = update_workbook(path, read_mapping(csv_path), output_path=output)
+            self.assertEqual(saved_path, output)
+            self.assertEqual(path.read_bytes(), original)
+            result = load_workbook(output)
             try:
                 sheet = result.active
                 self.assertEqual([cell.value for cell in sheet[2]],
@@ -44,7 +46,7 @@ class AddressDetailsTests(unittest.TestCase):
     def test_conflicting_mapping(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'mapping.csv'
-            path.write_text('raw_addr_id,raw_addr_details\n001,A\n001,B\n', encoding='utf-8')
+            path.write_text('raw_addr_id,clean_addr_with_nmbrs\n001,A\n001,B\n', encoding='utf-8')
             with self.assertRaisesRegex(ValueError, 'conflicting'):
                 read_mapping(path)
 
@@ -58,7 +60,7 @@ class AddressDetailsTests(unittest.TestCase):
             book.close()
             original = path.read_bytes()
             with self.assertRaisesRegex(ValueError, 'must be text'):
-                update_workbook(path, {'001': 'Address'})
+                update_workbook(path, {'001': 'Address'}, output_path=Path(folder) / 'output' / path.name)
             self.assertEqual(path.read_bytes(), original)
             self.assertEqual(list(Path(folder).iterdir()), [path])
 
