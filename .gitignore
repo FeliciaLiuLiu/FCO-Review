@@ -2,6 +2,9 @@ node_modules
 __pycache__/
 input/*
 !input/.gitkeep
+input2/*
+!input2/.gitkeep
+*.xlsx
 output/
 .DS_Store
 .env

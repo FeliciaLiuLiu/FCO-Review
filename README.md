@@ -78,3 +78,52 @@ Excel 导出已集成到 `convert.py`，使用 openpyxl；项目不再依赖本�
 ## 验证范围
 
 已检查空白模板的 45 列名称、顺序和无数据行状态，并预览表头。未创建 synthetic input dataset。尚未用真实 CSV 验证多文件转换，也未在 Windows 实机运行；提供真实数据后可运行转换并核对输入/输出行数。
+
+## 第二步：从 input2 补充地址
+
+已有 `Transaction Columns for Fintech RFI_0928.xlsx` 时，直接运行这一步，不需要重新运行 `convert.py`。
+
+1. 将 `Batch1.csv` 至 `Batch8.csv` 全部放入 `input2/`。
+2. 将现有 Excel 放入 `output/Transaction Columns for Fintech RFI_0928.xlsx`，运行前关闭 Excel。
+3. 在 Windows 的 Python 3.11 / Conda 终端执行：
+
+```powershell
+python -m pip install -r requirements.txt
+python fill_addresses.py
+```
+
+Excel 在其他位置时：
+
+```powershell
+python fill_addresses.py --workbook "C:\Users\yourname\Documents\Transaction Columns for Fintech RFI_0928.xlsx"
+```
+
+默认 CSV 为 UTF-8（兼容 BOM）；需要时加 `--encoding gb18030`。有多个交易工作表时加 `--sheet "Transactions"`。
+
+程序先按 Batch1 至 Batch8 的顺序生成 `input2/batch_combined.csv`，只保留一份表头，保留各批次全部记录及额外列。不把旧的 batch_combined.csv 再次合并。八个文件必须全部存在，每个文件都必须包含 `cinq_trxn_id` 以及下面 15 个来源列。不同批次的额外列取并集，缺少的额外列留空。
+
+| Excel 输出列 | Batch 来源列 |
+|---|---|
+| Ultimate Debtor Address Line 1 | ult_deb_address_line1 |
+| Ultimate Debtor Address Line 2 | ult_deb_address_line2 |
+| Ultimate Debtor Address Line 3 | ult_deb_address_line3 |
+| Debtor Address Line 1 | orig_addr_line1 |
+| Debtor Address Line 2 | orig_addr_line2 |
+| Debtor Address Line 3 | orig_addr_line3 |
+| Creditor Address Line 1 | secondary_bene_addr_line1 |
+| Creditor Address Line 2 | secondary_bene_addr_line2 |
+| Creditor Address Line 3 | secondary_bene_addr_line3 |
+| Ultimate Creditor Address Line 1 | ult_cred_address_line1 |
+| Ultimate Creditor Address Line 2 | ult_cred_address_line2 |
+| Ultimate Creditor Address Line 3 | ult_cred_address_line3 |
+| Initiating Party Address Line 1 | ip_address_line1 |
+| Initiating Party Address Line 2 | ip_address_line2 |
+| Initiating Party Address Line 3 | ip_address_line3 |
+
+地址取自生成的 batch_combined.csv。Excel 的 `Transaction ID (UETR or Other Unique ID)` 与 `cinq_trxn_id` 按文本精确匹配，去掉首尾空白，保留大小写、内部字符和前导零。数值类型或公式类型的 Excel 交易 ID 会报错，避免精度损失造成错误匹配。
+
+只更新原工作表的 15 个地址列，覆盖旧地址；其他列、行顺序、重复交易记录和原来的黄色高亮保留。匹配不到、空交易 ID、来源空地址均留空，不回退到旧 input 的地址。空 CSV 交易 ID 不参与匹配。重复 CSV ID 的 15 个地址完全相同时可复用；地址不同则报错并保留原 Excel，合并 CSV 仍可用于排查。不会因为重复 ID 增加 Excel 的行数。
+
+保存前自动创建带时间戳的原文件备份，再更新指定 Excel。终端显示各批次行数、匹配/未匹配行数。batch_combined.csv、真实批次、Excel 及备份不会作为新文件上传 GitHub。
+
+当前工作区未提供 8 个真实 Batch 或 0928 Excel，因此地址填充尚未实际执行，未生成模拟数据。
