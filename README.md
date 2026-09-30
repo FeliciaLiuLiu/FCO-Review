@@ -44,6 +44,24 @@ Independently, `MISSING_ROW_RATE = 0.03` selects rows and blanks one to `MAX_MIS
 
 The notebook streams generation and a full quality pass. `output/synthetic_afc_quality_report.json` reports injected noise, normalization counts, and rejection reasons. By default, no cleaned dataset is exported. Set `WRITE_CLEAN_OUTPUTS = True` to also export `synthetic_afc_clean.csv` and `synthetic_afc_quarantine.csv`; both preserve the original 12-column schema. Quarantined records retain original values; aggregate rejection reasons are in the separate JSON report. Invalid dates and ambiguous values are quarantined instead of guessed. The raw file always retains its noise. These are data-quality test rules, not financial-crime determinations. The 12-column synthetic file does not include all fields required by `convert.py` and should not be passed directly to that converter.
 
+## Extended synthetic dataset: 291 screenshot fields
+
+The final section of `generate_synthetic_transactions.ipynb`, titled **Extended AFC Dataset: 291 Screenshot Fields**, is independent of the earlier 12-column generator. Run its cells from the configuration cell onward to create `output/synthetic_afc_extended_1m.csv` and `output/synthetic_afc_extended_quality_report.json`. No real inputs are needed. The notebook is written in English and supports Python 3.11.
+
+The new CSV transposes the six reference screenshots: the 291 field names from column A become the single CSV header row, and the next 1,000,000 rows contain fictional AFC fintech transactions. The exact ordering comprises 19 initial fields, 19 groups of 14 party fields, and 6 trailing fields. The earlier 12-column CSV remains separate.
+
+`WIDE_NOISE_RATE = 0.15` selects exactly 15% of **transaction rows**, configurable between 10% and 20%, for noise. Scenarios include city `NOT FOUND`/`STREET`, country `97`/`HH`/`ZZ`, blanks, invalid dates, account and entity errors, amount issues, duplicate transaction IDs, invalid flags/codes, and product aliases. Naturally empty optional/intermediary groups are modeled separately and do not count as injected noise. All valid dates remain within 2025-01-01 to 2026-09-30.
+
+Generation and the complete read-back audit stream records, with a temporary SQLite index for duplicate detection. Allow several GB of disk space and several minutes to run. The CSV retains noise and its exact schema; field lists, blank counts, normalization counts, and quality issues are recorded only in the separate JSON report. `WIDE_OVERWRITE = True` replaces an existing extended output. Codes and fixed FX factors are synthetic test assumptions, not definitions from the source system or live rates. Generated data and reports remain excluded from Git.
+
+## Distinct values for both synthetic datasets
+
+The final notebook section, **Distinct Values for Both Generated Datasets**, scans every column of both the 12-column and 291-column CSVs. Run its configuration, tests, and execution cells after generating the datasets. It does not change either dataset.
+
+For each dataset it writes `<input_stem>_distinct_summary.csv` (one row per column, counts including/excluding blank, blank/nonblank rows, total rows, and a small preview) and `<input_stem>_distinct_values.csv` (every distinct value and its occurrence count, without truncating high-cardinality columns) into `output/`. Empty fields are explicitly distinguished from literal strings such as `NULL`. Case, whitespace, and leading zeros remain significant. Exact occurrence totals are checked against the row count for every column. The notebook prints counts and previews for all columns.
+
+The profiler streams rows and spills high-cardinality counters into a disposable SQLite database. Complete value reports can be large, so allow additional disk space and time. `DISTINCT_OVERWRITE = True` replaces reports only. Source CSVs are never rewritten; all report files remain excluded from Git.
+
 ## 使用
 
 本项目支持 Python 3.11 和 openpyxl。不需要 Node.js、Codex 或安装 Microsoft Excel。
