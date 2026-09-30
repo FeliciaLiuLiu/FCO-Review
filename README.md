@@ -32,6 +32,18 @@ python map_address_details.py --encoding gb18030 --sheet "Transactions"
 
 将 `input/` 中所有 CSV 的数据行合并到 `output/Transaction Columns for Fintech RFI_0925_v1.xlsx`，固定输出 45 列。当前交付的 Excel 只有表头，没有示例或业务数据。
 
+## Synthetic dataset notebook
+
+`generate_synthetic_transactions.ipynb` is an English-only notebook that generates 1,000,000 fictional fintech AFC test transactions in `output/synthetic_wire_transactions_1m.csv`. It uses exactly the 12 screenshot columns, in the supplied order. It does not read any real input data. Generated CSVs and the quality report are excluded from Git.
+
+Open the notebook in VS Code with the Jupyter extension or in Jupyter, select a Python 3.11 kernel, and run all cells. Install `ipykernel` into your selected environment if needed (`python -m pip install ipykernel`). The generator itself uses only the standard library. Set `PROJECT_DIR` if the notebook cannot locate the project automatically. The revised notebook sets `OVERWRITE = True` to replace the previous synthetic file; change it to `False` to protect existing output.
+
+Valid dates range from 2025-01-01 through 2026-09-30. Products include Wires, Domestic ACH, International ACH, card payments, wallet/P2P transfers, merchant settlements, and remittances. Fictional parties include simulated PayPal, Amazon, Venmo, and Payoneer platform accounts; all names are synthetic. The default `NOISE_RATE = 0.08` injects invalid dates (including `99999999`), date-format variations, product typos, invalid/missing amounts, duplicate IDs, missing accounts, and country/name variations. Country noise includes `97`, `HH`, `ZZ`, and blanks in either country column.
+
+Independently, `MISSING_ROW_RATE = 0.03` selects rows and blanks one to `MAX_MISSING_FIELDS = 3` existing columns. Empty fields are written as actual blanks. Both optional raw-name fields may also be naturally blank. The original 12-column schema is unchanged: no city columns or other fields are added. The English notebook explains generation, injection order, normalization, and missing-value handling; the report includes observed blank counts per column and observed country-noise counts.
+
+The notebook streams generation and a full quality pass. `output/synthetic_afc_quality_report.json` reports injected noise, normalization counts, and rejection reasons. By default, no cleaned dataset is exported. Set `WRITE_CLEAN_OUTPUTS = True` to also export `synthetic_afc_clean.csv` and `synthetic_afc_quarantine.csv`; both preserve the original 12-column schema. Quarantined records retain original values; aggregate rejection reasons are in the separate JSON report. Invalid dates and ambiguous values are quarantined instead of guessed. The raw file always retains its noise. These are data-quality test rules, not financial-crime determinations. The 12-column synthetic file does not include all fields required by `convert.py` and should not be passed directly to that converter.
+
 ## 使用
 
 本项目支持 Python 3.11 和 openpyxl。不需要 Node.js、Codex 或安装 Microsoft Excel。
